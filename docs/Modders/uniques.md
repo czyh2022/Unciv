@@ -3005,6 +3005,16 @@ If your mod renames Coast or Lakes, do not use this with one of these as paramet
 
 	Applicable to: Conditional
 
+??? example  "&lt;in cities with between [amount] and [amount] [populationFilter]&gt;"
+	Example: "&lt;in cities with between [3] and [3] [Followers of this Religion]&gt;"
+
+	Applicable to: Conditional
+
+??? example  "&lt;in cities with less than [amount] [populationFilter]&gt;"
+	Example: "&lt;in cities with less than [3] [Followers of this Religion]&gt;"
+
+	Applicable to: Conditional
+
 ??? example  "&lt;with a garrison&gt;"
 	Applicable to: Conditional
 
@@ -3269,6 +3279,16 @@ If your mod renames Coast or Lakes, do not use this with one of these as paramet
 
 ??? example  "&lt;upon losing the [promotion] promotion&gt;"
 	Example: "&lt;upon losing the [Shock I] promotion&gt;"
+
+	Applicable to: UnitTriggerCondition
+
+??? example  "&lt;upon gaining the [promotion] status&gt;"
+	Example: "&lt;upon gaining the [Shock I] status&gt;"
+
+	Applicable to: UnitTriggerCondition
+
+??? example  "&lt;upon losing the [promotion] status&gt;"
+	Example: "&lt;upon losing the [Shock I] status&gt;"
 
 	Applicable to: UnitTriggerCondition
 

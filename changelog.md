@@ -1,3 +1,53 @@
+## 4.13.14
+
+Ruleset validation for personalities with victory types not present in ruleset
+
+Added mod download percentage tracking
+
+Adjacent tiles updated when tile in changed in map editor, to update relevant edge tile images
+
+Remove "-0 HP" from city attack notifications
+
+Improve AI city settling, science game, and belief picking  - By EmperorPinguin
+
+Add two population-related conditional uniques  - By PLynx01
+
+## 4.13.13
+
+Minimized MP game update IO by ignoring games older than 2 weeks for 'update all'
+
+Resolved ANRs when pausing game due to game clone time
+
+Resolved ANRs when starting a new game (checking for multuplayer server connection)
+
+Protect terrainImage against incorrectly configured mods (natural wonder turnsInto is not in ruleset)
+
+Resolved race-condition error for loading terrain icons
+
+## 4.13.12
+
+Cannot have 2 research agreements at once due to counteroffers
+
+Modding: Added "upon losing/gaining the [promotion] status" unit triggers
+
+Mod branch parsing (downloading from user input url) can now handle branch names containing "/"
+
+Fixed "Top" edge tiles not showing - kudos @legacymtgsalvationuser69544
+
+## 4.13.11
+
+Better AI evaluation for 'win the game' buildings
+
+Modding:
+- Trigger uniques from religious beliefs activate correctly
+- Added "removing the [promotion] promotion/status" unit action modifier
+- Added 'upon gaining/losing [promotionName] promotion' unit trigger uniques 
+- Allow comment uniques and timed uniques in event choices
+
+Re-activate Thai language, now with diacritic support
+
+Improve AI tech and policy choices  - By EmperorPinguin
+
 ## 4.13.10
 
 Tilesets: Added edge tile images!
