@@ -22,7 +22,6 @@ import com.unciv.models.ruleset.PerpetualConstruction
 import com.unciv.models.ruleset.RejectionReasonType
 import com.unciv.models.ruleset.Ruleset
 import com.unciv.models.ruleset.unique.LocalUniqueCache
-import com.unciv.models.ruleset.unique.StateForConditionals
 import com.unciv.models.ruleset.unique.UniqueMap
 import com.unciv.models.ruleset.unique.UniqueTriggerActivation
 import com.unciv.models.ruleset.unique.UniqueType
@@ -30,11 +29,11 @@ import com.unciv.models.ruleset.unit.BaseUnit
 import com.unciv.models.stats.Stat
 import com.unciv.models.stats.Stats
 import com.unciv.models.translations.tr
-import com.unciv.ui.components.extensions.withItem
-import com.unciv.ui.components.extensions.withoutItem
 import com.unciv.ui.components.fonts.Fonts
 import com.unciv.ui.screens.civilopediascreen.CivilopediaCategories
 import com.unciv.ui.screens.civilopediascreen.FormattedLine
+import com.unciv.utils.withItem
+import com.unciv.utils.withoutItem
 import kotlin.math.ceil
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -151,7 +150,7 @@ class CityConstructions : IsPartOfGameInfoSerialization {
         val currentProgress = if (useStoredProduction) getWorkDone(construction.name) else 0
         val lines = ArrayList<String>()
         val buildable = !construction.getMatchingUniques(UniqueType.Unbuildable)
-            .any { it.conditionalsApply(StateForConditionals(city.civ, city)) }
+            .any { it.conditionalsApply(city.state) }
         if (buildable)
             lines += (if (currentProgress == 0) "" else "$currentProgress/") +
                     "$cost${Fonts.production} $turnsToConstruction${Fonts.turn}"
@@ -185,8 +184,6 @@ class CityConstructions : IsPartOfGameInfoSerialization {
     }
 
     fun getCurrentConstruction(): IConstruction = getConstruction(currentConstructionFromQueue)
-
-    fun isAllBuilt(buildingList: List<String>): Boolean = buildingList.all { isBuilt(it) }
 
     fun isBuilt(buildingName: String): Boolean = builtBuildings.contains(buildingName)
 
@@ -243,7 +240,7 @@ class CityConstructions : IsPartOfGameInfoSerialization {
     fun getBuiltBuildings(): Sequence<Building> = builtBuildingObjects.asSequence()
 
     fun containsBuildingOrEquivalent(buildingNameOrUnique: String): Boolean =
-            isBuilt(buildingNameOrUnique) || getBuiltBuildings().any { it.replaces == buildingNameOrUnique || it.hasTagUnique(buildingNameOrUnique) }
+            isBuilt(buildingNameOrUnique) || getBuiltBuildings().any { it.replaces == buildingNameOrUnique || it.hasUnique(buildingNameOrUnique, city.state) }
 
     fun getWorkDone(constructionName: String): Int {
         return if (inProgressConstructions.containsKey(constructionName)) inProgressConstructions[constructionName]!!
@@ -296,7 +293,7 @@ class CityConstructions : IsPartOfGameInfoSerialization {
     }
 
     fun cheapestStatBuilding(stat: Stat): Building? {
-        return city.getRuleset().buildings.values
+        return city.getRuleset().buildings.values.asSequence()
             .filter { !it.isAnyWonder() && it.isStatRelated(stat, city) &&
                 (it.isBuildable(this) || isBeingConstructedOrEnqueued(it.name)) }
             .minByOrNull { it.cost }
@@ -375,7 +372,7 @@ class CityConstructions : IsPartOfGameInfoSerialization {
             // First construction will be built next turn, we need to make sure it has the correct resources
             if (constructionQueue.isEmpty() && getWorkDone(constructionName) == 0) {
                 val costUniques = construction.getMatchingUniquesNotConflicting(UniqueType.CostsResources, 
-                    StateForConditionals(city)
+                    city.state
                 )
                 val civResources = city.civ.getCivResourcesByName()
 
@@ -418,7 +415,7 @@ class CityConstructions : IsPartOfGameInfoSerialization {
                     }
                 } else if (construction is BaseUnit) {
                     // Production put into upgradable units gets put into upgraded version
-                    val cheapestUpgradeUnit = construction.getRulesetUpgradeUnits(StateForConditionals(city.civ, city))
+                    val cheapestUpgradeUnit = construction.getRulesetUpgradeUnits(city.state)
                         .map { city.civ.getEquivalentUnit(it) }
                         .filter { it.isBuildable(this) }
                         .minByOrNull { it.cost }
@@ -432,7 +429,7 @@ class CityConstructions : IsPartOfGameInfoSerialization {
     }
 
     private fun constructionBegun(construction: IConstruction) {
-        val costUniques = construction.getMatchingUniquesNotConflicting(UniqueType.CostsResources, StateForConditionals(city))
+        val costUniques = construction.getMatchingUniquesNotConflicting(UniqueType.CostsResources, city.state)
 
         for (unique in costUniques) {
             val amount = unique.params[0].toInt()
@@ -496,7 +493,7 @@ class CityConstructions : IsPartOfGameInfoSerialization {
                 locationAndPediaActions, NotificationCategory.Production, NotificationIcon.Construction, icon)
         }
 
-        if (construction.hasUnique(UniqueType.TriggersAlertOnCompletion, StateForConditionals(city.civ, city))) {
+        if (construction.hasUnique(UniqueType.TriggersAlertOnCompletion, city.state)) {
             for (otherCiv in city.civ.gameInfo.civilizations) {
                 // No need to notify ourself, since we already got the building notification anyway
                 if (otherCiv == city.civ) continue
@@ -559,21 +556,20 @@ class CityConstructions : IsPartOfGameInfoSerialization {
     }
 
     fun triggerNewBuildingUniques(building: Building) {
-        val stateForConditionals = StateForConditionals(city.civ, city)
+        val stateForConditionals = city.state
         val triggerNotificationText ="due to constructing [${building.name}]"
 
         for (unique in building.uniqueObjects)
             if (!unique.hasTriggerConditional() && unique.conditionalsApply(stateForConditionals))
                 UniqueTriggerActivation.triggerUnique(unique, city, triggerNotificationText = triggerNotificationText)
 
-        for (unique in city.civ.getTriggeredUniques(UniqueType.TriggerUponConstructingBuilding, stateForConditionals))
-            if (unique.getModifiers(UniqueType.TriggerUponConstructingBuilding).any { building.matchesFilter(it.params[0])} )
-                UniqueTriggerActivation.triggerUnique(unique, city, triggerNotificationText = triggerNotificationText)
+        for (unique in city.civ.getTriggeredUniques(UniqueType.TriggerUponConstructingBuilding, stateForConditionals)
+                { building.matchesFilter(it.params[0], stateForConditionals) })
+            UniqueTriggerActivation.triggerUnique(unique, city, triggerNotificationText = triggerNotificationText)
 
-        for (unique in city.civ.getTriggeredUniques(UniqueType.TriggerUponConstructingBuildingCityFilter, stateForConditionals))
-            if (unique.getModifiers(UniqueType.TriggerUponConstructingBuildingCityFilter).any {
-                    building.matchesFilter(it.params[0]) && city.matchesFilter(it.params[1]) })
-                UniqueTriggerActivation.triggerUnique(unique, city, triggerNotificationText = triggerNotificationText)
+        for (unique in city.civ.getTriggeredUniques(UniqueType.TriggerUponConstructingBuildingCityFilter, stateForConditionals)
+                { building.matchesFilter(it.params[0], stateForConditionals) && city.matchesFilter(it.params[1]) })
+            UniqueTriggerActivation.triggerUnique(unique, city, triggerNotificationText = triggerNotificationText)
     }
 
     fun removeBuilding(buildingName: String) {
@@ -677,15 +673,15 @@ class CityConstructions : IsPartOfGameInfoSerialization {
                 ?: return false // We should never end up here anyway, so things have already gone _way_ wrong
             city.addStat(stat, -1 * constructionCost)
 
-            val conditionalState = StateForConditionals(civInfo = city.civ, city = city)
+            val conditionalState = city.state
 
             if ((
                     city.civ.getMatchingUniques(UniqueType.BuyUnitsIncreasingCost, conditionalState) +
                     city.civ.getMatchingUniques(UniqueType.BuyBuildingsIncreasingCost, conditionalState)
                 ).any {
                     (
-                        construction is BaseUnit && construction.matchesFilter(it.params[0]) ||
-                        construction is Building && construction.matchesFilter(it.params[0])
+                        construction is BaseUnit && construction.matchesFilter(it.params[0], conditionalState) ||
+                        construction is Building && construction.matchesFilter(it.params[0], conditionalState)
                     )
                     && city.matchesFilter(it.params[3])
                     && it.params[2] == stat.name

@@ -8,7 +8,6 @@ import com.unciv.logic.GameInfo
 import com.unciv.logic.IsPartOfGameInfoSerialization
 import com.unciv.logic.MultiFilter
 import com.unciv.logic.UncivShowableException
-import com.unciv.logic.automation.ai.TacticalAI
 import com.unciv.logic.automation.unit.WorkerAutomation
 import com.unciv.logic.city.City
 import com.unciv.logic.city.managers.CityFounder
@@ -86,6 +85,9 @@ class Civilization : IsPartOfGameInfoSerialization {
 
     @Transient
     lateinit var nation: Nation
+    
+    @Transient
+    var state = StateForConditionals.EmptyState
 
     @Transient
     val units = UnitManager(this)
@@ -168,9 +170,6 @@ class Civilization : IsPartOfGameInfoSerialization {
     val popupAlerts = ArrayList<PopupAlert>()
     private var allyCivName: String? = null
     var naturalWonders = ArrayList<String>()
-
-    /* AI section */
-    val tacticalAI = TacticalAI()
 
     var notifications = ArrayList<Notification>()
 
@@ -453,7 +452,7 @@ class Civilization : IsPartOfGameInfoSerialization {
 
         for (resourceSupply in detailedCivResources) {
             if (resourceSupply.resource.isStockpiled()) continue
-            if (resourceSupply.resource.hasUnique(UniqueType.CannotBeTraded, StateForConditionals(this))) continue
+            if (resourceSupply.resource.hasUnique(UniqueType.CannotBeTraded, state)) continue
             // If we got it from another trade or from a CS, preserve the origin
             if (resourceSupply.isCityStateOrTradeOrigin()) {
                 newResourceSupplyList.add(resourceSupply.copy())
@@ -513,14 +512,14 @@ class Civilization : IsPartOfGameInfoSerialization {
 
     fun hasResource(resourceName: String): Boolean = getResourceAmount(resourceName) > 0
 
-    fun hasUnique(uniqueType: UniqueType, stateForConditionals: StateForConditionals =
-        StateForConditionals(this)) = getMatchingUniques(uniqueType, stateForConditionals).any()
+    fun hasUnique(uniqueType: UniqueType, stateForConditionals: StateForConditionals = state) =
+        getMatchingUniques(uniqueType, stateForConditionals).any()
 
     // Does not return local uniques, only global ones.
     /** Destined to replace getMatchingUniques, gradually, as we fill the enum */
     fun getMatchingUniques(
         uniqueType: UniqueType,
-        stateForConditionals: StateForConditionals = StateForConditionals(this)
+        stateForConditionals: StateForConditionals = state
     ): Sequence<Unique> = sequence {
         yieldAll(nation.getMatchingUniques(uniqueType, stateForConditionals))
         yieldAll(cities.asSequence()
@@ -540,33 +539,31 @@ class Civilization : IsPartOfGameInfoSerialization {
 
     fun getTriggeredUniques(
         trigger: UniqueType,
-        stateForConditionals: StateForConditionals = StateForConditionals(this)
+        stateForConditionals: StateForConditionals = state,
+        triggerFilter: (Unique) -> Boolean = { true }
     ) : Iterable<Unique> = sequence {
-        yieldAll(nation.uniqueMap.getTriggeredUniques(trigger, stateForConditionals))
+        yieldAll(nation.uniqueMap.getTriggeredUniques(trigger, stateForConditionals, triggerFilter))
         yieldAll(cities.asSequence()
-            .flatMap { city -> city.cityConstructions.builtBuildingUniqueMap.getTriggeredUniques(trigger, stateForConditionals) }
+            .flatMap { city -> city.cityConstructions.builtBuildingUniqueMap.getTriggeredUniques(trigger, stateForConditionals, triggerFilter) }
         )
         if (religionManager.religion != null)
-            yieldAll(religionManager.religion!!.founderBeliefUniqueMap.getTriggeredUniques(trigger, stateForConditionals))
-        yieldAll(policies.policyUniques.getTriggeredUniques(trigger, stateForConditionals))
-        yieldAll(tech.techUniques.getTriggeredUniques(trigger, stateForConditionals))
-        yieldAll(getEra().uniqueMap.getTriggeredUniques (trigger, stateForConditionals))
-        yieldAll(gameInfo.ruleset.globalUniques.uniqueMap.getTriggeredUniques(trigger, stateForConditionals))
+            yieldAll(religionManager.religion!!.founderBeliefUniqueMap.getTriggeredUniques(trigger, stateForConditionals, triggerFilter))
+        yieldAll(policies.policyUniques.getTriggeredUniques(trigger, stateForConditionals, triggerFilter))
+        yieldAll(tech.techUniques.getTriggeredUniques(trigger, stateForConditionals, triggerFilter))
+        yieldAll(getEra().uniqueMap.getTriggeredUniques (trigger, stateForConditionals, triggerFilter))
+        yieldAll(gameInfo.ruleset.globalUniques.uniqueMap.getTriggeredUniques(trigger, stateForConditionals, triggerFilter))
     }.toList() // Triggers can e.g. add buildings which contain triggers, causing concurrent modification errors
 
-
-    @Transient
-    private val cachedMatchesFilterResult = HashMap<String, Boolean>()
-
     /** Implements [UniqueParameterType.CivFilter][com.unciv.models.ruleset.unique.UniqueParameterType.CivFilter] */
-    fun matchesFilter(filter: String): Boolean =
-        cachedMatchesFilterResult.getOrPut(filter) { MultiFilter.multiFilter(filter, ::matchesSingleFilter ) }
+    fun matchesFilter(filter: String, state: StateForConditionals? = this.state, multiFilter: Boolean = true): Boolean =
+        if (multiFilter) MultiFilter.multiFilter(filter, { matchesSingleFilter(it, state) })
+        else matchesSingleFilter(filter, state)
 
-    fun matchesSingleFilter(filter: String): Boolean {
+    fun matchesSingleFilter(filter: String, state: StateForConditionals? = this.state): Boolean {
         return when (filter) {
             "Human player" -> isHuman()
             "AI player" -> isAI()
-            else -> nation.matchesFilter(filter)
+            else -> nation.matchesFilter(filter, state, false)
         }
     }
 
@@ -783,8 +780,6 @@ class Civilization : IsPartOfGameInfoSerialization {
         passThroughImpassableUnlocked = passableImpassables.isNotEmpty()
 
         hasLongCountDisplayUnique = hasUnique(UniqueType.MayanCalendarDisplay)
-
-        tacticalAI.init(this)
 
         cache.setTransients()
     }

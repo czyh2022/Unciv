@@ -1,6 +1,7 @@
 package com.unciv.ui.components.tilegroups.layers
 
 import com.badlogic.gdx.graphics.Color
+import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.scenes.scene2d.Actor
 import com.badlogic.gdx.scenes.scene2d.ui.Image
@@ -17,8 +18,9 @@ class TileLayerTerrain(tileGroup: TileGroup, size: Float) : TileLayer(tileGroup,
 
     override fun act(delta: Float) {}
     override fun hit(x: Float, y: Float, touchable: Boolean): Actor? = null
+    override fun draw(batch: Batch?, parentAlpha: Float) = super.draw(batch, parentAlpha)
 
-    private val tileBaseImages: ArrayList<Image> = ArrayList()
+    val tileBaseImages: ArrayList<Image> = ArrayList()
     private var tileImageIdentifiers = listOf<String>()
     private var bottomRightRiverImage: Image? = null
     private var bottomRiverImage: Image? = null
@@ -54,7 +56,7 @@ class TileLayerTerrain(tileGroup: TileGroup, size: Float) : TileLayer(tileGroup,
 
         val baseHexagon = if (strings().tileSetConfig.useColorAsBaseTerrain)
             listOf(strings().hexagon)
-        else listOf()
+        else emptyList()
 
         val tile = tileGroup.tile
 
@@ -76,14 +78,19 @@ class TileLayerTerrain(tileGroup: TileGroup, size: Float) : TileLayer(tileGroup,
         val terrainImages = if (tile.naturalWonder != null)
             sequenceOf(tile.baseTerrain, tile.naturalWonder!!)
         else  sequenceOf(tile.baseTerrain) + tile.terrainFeatures.asSequence()
+        val edgeImages = getEdgeTileLocations()
         val allTogether = (terrainImages + resourceAndImprovementSequence).joinToString("+")
         val allTogetherLocation = strings().getTile(allTogether)
 
+        // If the tilesetconfig *explicitly* lists the terrains+improvements etc, we can't know where in that list to place the edges
+        //   So we default to placing them over everything else.
+        // If there is no explicit list, then we can know to place them between the terrain and the improvement
         return when {
-            strings().tileSetConfig.ruleVariants[allTogether] != null -> baseHexagon + strings().tileSetConfig.ruleVariants[allTogether]!!.map { strings().getTile(it) }
-            ImageGetter.imageExists(allTogetherLocation) -> baseHexagon + allTogetherLocation
-            tile.naturalWonder != null -> getNaturalWonderBackupImage(baseHexagon)
-            else -> baseHexagon + getTerrainImageLocations(terrainImages) + getImprovementAndResourceImages(resourceAndImprovementSequence)
+            strings().tileSetConfig.ruleVariants[allTogether] != null -> baseHexagon + 
+                    strings().tileSetConfig.ruleVariants[allTogether]!!.map { strings().getTile(it) } + edgeImages
+            ImageGetter.imageExists(allTogetherLocation) -> baseHexagon + allTogetherLocation + edgeImages
+            tile.naturalWonder != null -> getNaturalWonderBackupImage(baseHexagon) + edgeImages
+            else -> baseHexagon + getTerrainImageLocations(terrainImages) + edgeImages + getImprovementAndResourceImages(resourceAndImprovementSequence)
         }
     }
     
@@ -100,17 +107,23 @@ class TileLayerTerrain(tileGroup: TileGroup, size: Float) : TileLayer(tileGroup,
         val direction = NeighborDirection.fromVector(vectorToNeighbor)
             ?: return emptyList()
         val possibleEdgeFiles = strings().edgeImagesByPosition[direction] ?: return emptyList()
+        
+        // Required for performance - full matchesFilter is too expensive for something that needs to run every update()
+        fun matchesFilterMinimal(originTile: Tile, filter: String): Boolean {
+            if (originTile.allTerrains.any { it.name == filter }) return true
+            if (originTile.getBaseTerrain().type.name == filter) return true
+            return false
+        }
 
         return possibleEdgeFiles.filter {
-            if (!originTile.matchesFilter(it.originTileFilter)) return@filter false
-            if (!neighborTile.matchesFilter(it.destinationTileFilter)) return@filter false
+            if (!matchesFilterMinimal(originTile, it.originTileFilter)) return@filter false
+            if (!matchesFilterMinimal(neighborTile, it.destinationTileFilter)) return@filter false
             return@filter true
         }.map { it.fileName }
     }
 
     private fun updateTileImage(viewingCiv: Civilization?) {
-        val tileBaseImageLocations = getTileBaseImageLocations(viewingCiv) + 
-                getEdgeTileLocations()
+        val tileBaseImageLocations = getTileBaseImageLocations(viewingCiv)
         
         if (tileBaseImageLocations.size == tileImageIdentifiers.size) {
             if (tileBaseImageLocations.withIndex().all { (i, imageLocation) -> tileImageIdentifiers[i] == imageLocation })
@@ -142,6 +155,7 @@ class TileLayerTerrain(tileGroup: TileGroup, size: Float) : TileLayer(tileGroup,
             val finalLocation = existingImages.random(
                 Random(tileGroup.tile.position.hashCode() + locationToCheck.hashCode()))
             val image = ImageGetter.getImage(finalLocation)
+            image.name = finalLocation // for debug mode reveal
 
             tileBaseImages.add(image)
             addActor(image)

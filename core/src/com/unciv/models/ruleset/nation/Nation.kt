@@ -5,6 +5,7 @@ import com.unciv.Constants
 import com.unciv.logic.MultiFilter
 import com.unciv.models.ruleset.Ruleset
 import com.unciv.models.ruleset.RulesetObject
+import com.unciv.models.ruleset.unique.StateForConditionals
 import com.unciv.models.ruleset.unique.UniqueMap
 import com.unciv.models.ruleset.unique.UniqueTarget
 import com.unciv.models.ruleset.unique.UniqueType
@@ -258,18 +259,25 @@ class Nation : RulesetObject() {
         }
     }
     
-    fun matchesFilter(filter: String): Boolean {
-        return MultiFilter.multiFilter(filter, ::matchesSingleFilter)
+    fun matchesFilter(filter: String, state: StateForConditionals? = null, multiFilter: Boolean = true): Boolean {
+        // Todo: Add 'multifilter=false' option to Multifilter itself to cut down on duplicate code
+        return if (multiFilter) MultiFilter.multiFilter(filter, {
+            matchesSingleFilter(filter) ||
+                state != null && hasUnique(it, state) ||
+                state == null && hasTagUnique(it)
+        })
+        else matchesSingleFilter(filter) ||
+            state != null && hasUnique(filter, state) ||
+            state == null && hasTagUnique(filter)
     }
 
     private fun matchesSingleFilter(filter: String): Boolean {
+        // All cases are compile-time constants, for performance
         return when (filter) {
-            in Constants.all -> true
-            name -> true
+            "All", "all" -> true
             "Major" -> isMajorCiv
-            // "CityState" to be deprecated, replaced by "City-States"
-            "CityState", Constants.cityStates -> isCityState
-            else -> uniques.contains(filter)
+            Constants.cityStates, "City-State" -> isCityState
+            else -> filter == name
         }
     }
 }

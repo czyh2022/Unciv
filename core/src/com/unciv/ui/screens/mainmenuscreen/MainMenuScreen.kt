@@ -1,5 +1,6 @@
 ﻿package com.unciv.ui.screens.mainmenuscreen
 
+import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.scenes.scene2d.Touchable
 import com.badlogic.gdx.scenes.scene2d.actions.Actions
 import com.badlogic.gdx.scenes.scene2d.ui.Stack
@@ -168,12 +169,6 @@ class MainMenuScreen: BaseScreen(), RecreateOnResize {
             { game.pushScreen(ModManagementScreen()) }
         column2.add(modsTable).row()
 
-        if (game.files.getScenarioFiles().any()){
-            val scenarioTable = getMenuButton("Scenarios", "OtherIcons/Scenarios", KeyboardBinding.Scenarios)
-            { game.pushScreen(ScenarioScreen()) }
-            column2.add(scenarioTable).row()
-        }
-
         val optionsTable = getMenuButton("Options", "OtherIcons/Options", KeyboardBinding.MainMenuOptions)
             { openOptionsPopup() }
         optionsTable.onLongPress { openOptionsPopup(withDebug = true) }
@@ -210,6 +205,17 @@ class MainMenuScreen: BaseScreen(), RecreateOnResize {
         helpButton.addTooltip(KeyboardBinding.Civilopedia, 30f)
         helpButton.setPosition(30f, 30f)
         stage.addActor(helpButton)
+        
+        
+        val versionLabel = "{Version} ${UncivGame.VERSION.text}".toLabel()
+        versionLabel.setAlignment(Align.center)
+        val versionTable = Table()
+        versionTable.background = skinStrings.getUiBackground("MainMenuScreen/Version",
+            skinStrings.roundedEdgeRectangleShape, Color.DARK_GRAY.cpy().apply { a=0.7f })
+        versionTable.add(versionLabel)
+        versionTable.pack()
+        versionTable.setPosition(stage.width/2, 10f, Align.bottom)
+        stage.addActor(versionTable)
     }
 
     private fun startBackgroundMapGeneration() {

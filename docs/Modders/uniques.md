@@ -962,9 +962,6 @@ Simple unique parameters are explained by mouseover. Complex parameters are expl
 ??? example  "Can only heal by pillaging"
 	Applicable to: Global, Unit
 
-??? example  "Defense bonus when embarked"
-	Applicable to: Global, Unit
-
 ??? example  "[relativeAmount]% maintenance costs"
 	Example: "[+20]% maintenance costs"
 
@@ -1402,7 +1399,7 @@ Simple unique parameters are explained by mouseover. Complex parameters are expl
 	Applicable to: Building, Unit, Improvement
 
 ??? example  "Costs [amount] [stockpiledResource]"
-	Do not confuse with "costs [amount] [stockpiledResource]" (lowercase 'c'), the Unit Action Modifier.
+	These resources are removed *when work begins* on the construction. Do not confuse with "costs [amount] [stockpiledResource]" (lowercase 'c'), the Unit Action Modifier.
 	Example: "Costs [3] [Mana]"
 
 	Applicable to: Building, Unit, Improvement
@@ -1550,19 +1547,11 @@ Simple unique parameters are explained by mouseover. Complex parameters are expl
 ??? example  "Cannot be hurried"
 	Applicable to: Tech, Building
 
-??? example  "Hidden when religion is disabled"
-	Applicable to: Building, Unit, Ruins, Tutorial
-
-??? example  "Hidden when espionage is disabled"
-	Applicable to: Building
-
-??? example  "Hidden when [victoryType] Victory is disabled"
-	Example: "Hidden when [Domination] Victory is disabled"
-
-	Applicable to: Building, Unit
-
 ??? example  "Will not be displayed in Civilopedia"
 	Applicable to: Nation, Tech, Policy, FounderBelief, FollowerBelief, Building, Unit, UnitType, Promotion, Terrain, Improvement, Resource, Ruins, Speed, EventChoice
+
+??? example  "Shown while unbuilable"
+	Applicable to: Building, Unit
 
 ??? example  "Comment [comment]"
 	Allows displaying arbitrary text in a Unique listing. Only the text within the '[]' brackets will be displayed, the rest serves to allow Ruleset validation to recognize the intent.
@@ -1620,7 +1609,7 @@ Simple unique parameters are explained by mouseover. Complex parameters are expl
 	Applicable to: Building, Unit, Improvement
 
 ??? example  "Costs [amount] [stockpiledResource]"
-	Do not confuse with "costs [amount] [stockpiledResource]" (lowercase 'c'), the Unit Action Modifier.
+	These resources are removed *when work begins* on the construction. Do not confuse with "costs [amount] [stockpiledResource]" (lowercase 'c'), the Unit Action Modifier.
 	Example: "Costs [3] [Mana]"
 
 	Applicable to: Building, Unit, Improvement
@@ -1756,8 +1745,8 @@ Simple unique parameters are explained by mouseover. Complex parameters are expl
 
 	Applicable to: Global, Unit
 
-??? example  "[relativeAmount]% Strength for enemy [combatantFilter] units in adjacent [tileFilter] tiles"
-	Example: "[+20]% Strength for enemy [City] units in adjacent [Farm] tiles"
+??? example  "[relativeAmount]% Strength for enemy [mapUnitFilter] units in adjacent [tileFilter] tiles"
+	Example: "[+20]% Strength for enemy [Wounded] units in adjacent [Farm] tiles"
 
 	Applicable to: Unit
 
@@ -1908,9 +1897,6 @@ Simple unique parameters are explained by mouseover. Complex parameters are expl
 	Example: "All adjacent units heal [3] HP when healing"
 
 	Applicable to: Unit
-
-??? example  "Defense bonus when embarked"
-	Applicable to: Global, Unit
 
 ??? example  "No Sight"
 	Applicable to: Unit
@@ -2124,16 +2110,11 @@ Simple unique parameters are explained by mouseover. Complex parameters are expl
 
 	Applicable to: Unit
 
-??? example  "Hidden when religion is disabled"
-	Applicable to: Building, Unit, Ruins, Tutorial
-
-??? example  "Hidden when [victoryType] Victory is disabled"
-	Example: "Hidden when [Domination] Victory is disabled"
-
-	Applicable to: Building, Unit
-
 ??? example  "Will not be displayed in Civilopedia"
 	Applicable to: Nation, Tech, Policy, FounderBelief, FollowerBelief, Building, Unit, UnitType, Promotion, Terrain, Improvement, Resource, Ruins, Speed, EventChoice
+
+??? example  "Shown while unbuilable"
+	Applicable to: Building, Unit
 
 ??? example  "Comment [comment]"
 	Allows displaying arbitrary text in a Unique listing. Only the text within the '[]' brackets will be displayed, the rest serves to allow Ruleset validation to recognize the intent.
@@ -2388,7 +2369,7 @@ If your mod renames Coast or Lakes, do not use this with one of these as paramet
 	Applicable to: Global, FollowerBelief, Improvement
 
 ??? example  "Costs [amount] [stockpiledResource]"
-	Do not confuse with "costs [amount] [stockpiledResource]" (lowercase 'c'), the Unit Action Modifier.
+	These resources are removed *when work begins* on the construction. Do not confuse with "costs [amount] [stockpiledResource]" (lowercase 'c'), the Unit Action Modifier.
 	Example: "Costs [3] [Mana]"
 
 	Applicable to: Building, Unit, Improvement
@@ -2470,6 +2451,7 @@ If your mod renames Coast or Lakes, do not use this with one of these as paramet
 	Applicable to: Improvement
 
 ??? example  "Gives a defensive bonus of [relativeAmount]%"
+	Does not accept unit-based conditionals
 	Example: "Gives a defensive bonus of [+20]%"
 
 	Applicable to: Improvement
@@ -2625,9 +2607,6 @@ If your mod renames Coast or Lakes, do not use this with one of these as paramet
 
 	Applicable to: Ruins
 
-??? example  "Hidden when religion is disabled"
-	Applicable to: Building, Unit, Ruins, Tutorial
-
 ??? example  "Will not be displayed in Civilopedia"
 	Applicable to: Nation, Tech, Policy, FounderBelief, FollowerBelief, Building, Unit, UnitType, Promotion, Terrain, Improvement, Resource, Ruins, Speed, EventChoice
 
@@ -2654,9 +2633,6 @@ If your mod renames Coast or Lakes, do not use this with one of these as paramet
 	Applicable to: Triggerable, Terrain, Speed, ModOptions, MetaModifier
 
 ## Tutorial uniques
-??? example  "Hidden when religion is disabled"
-	Applicable to: Building, Unit, Ruins, Tutorial
-
 ## CityState uniques
 ??? example  "Provides military units every ≈[amount] turns"
 	Example: "Provides military units every ≈[3] turns"
@@ -2758,11 +2734,6 @@ If your mod renames Coast or Lakes, do not use this with one of these as paramet
 
     Modifiers that can be added to other uniques to limit when they will be active
 
-??? example  "&lt;with [amount]% chance&gt;"
-	Example: "&lt;with [3]% chance&gt;"
-
-	Applicable to: Conditional
-
 ??? example  "&lt;every [positiveAmount] turns&gt;"
 	Example: "&lt;every [3] turns&gt;"
 
@@ -2778,6 +2749,43 @@ If your mod renames Coast or Lakes, do not use this with one of these as paramet
 
 	Applicable to: Conditional
 
+??? example  "&lt;on [speed] game speed&gt;"
+	Example: "&lt;on [Quick] game speed&gt;"
+
+	Applicable to: Conditional
+
+??? example  "&lt;on [difficulty] difficulty&gt;"
+	Example: "&lt;on [Prince] difficulty&gt;"
+
+	Applicable to: Conditional
+
+??? example  "&lt;when [victoryType] Victory is enabled&gt;"
+	Example: "&lt;when [Domination] Victory is enabled&gt;"
+
+	Applicable to: Conditional
+
+??? example  "&lt;when [victoryType] Victory is disabled&gt;"
+	Example: "&lt;when [Domination] Victory is disabled&gt;"
+
+	Applicable to: Conditional
+
+??? example  "&lt;when religion is enabled&gt;"
+	Applicable to: Conditional
+
+??? example  "&lt;when religion is disabled&gt;"
+	Applicable to: Conditional
+
+??? example  "&lt;when espionage is enabled&gt;"
+	Applicable to: Conditional
+
+??? example  "&lt;when espionage is disabled&gt;"
+	Applicable to: Conditional
+
+??? example  "&lt;with [amount]% chance&gt;"
+	Example: "&lt;with [3]% chance&gt;"
+
+	Applicable to: Conditional
+
 ??? example  "&lt;if tutorials are enabled&gt;"
 	Applicable to: Conditional
 
@@ -2786,8 +2794,8 @@ If your mod renames Coast or Lakes, do not use this with one of these as paramet
 
 	Applicable to: Conditional
 
-??? example  "&lt;for [civFilter]&gt;"
-	Example: "&lt;for [City-States]&gt;"
+??? example  "&lt;for [civFilter] Civilizations&gt;"
+	Example: "&lt;for [City-States] Civilizations&gt;"
 
 	Applicable to: Conditional
 
@@ -2838,21 +2846,6 @@ If your mod renames Coast or Lakes, do not use this with one of these as paramet
 
 ??? example  "&lt;if starting in the [era]&gt;"
 	Example: "&lt;if starting in the [Ancient era]&gt;"
-
-	Applicable to: Conditional
-
-??? example  "&lt;on [speed] game speed&gt;"
-	Example: "&lt;on [Quick] game speed&gt;"
-
-	Applicable to: Conditional
-
-??? example  "&lt;when [victoryType] Victory is enabled&gt;"
-	Example: "&lt;when [Domination] Victory is enabled&gt;"
-
-	Applicable to: Conditional
-
-??? example  "&lt;when [victoryType] Victory is disabled&gt;"
-	Example: "&lt;when [Domination] Victory is disabled&gt;"
 
 	Applicable to: Conditional
 
@@ -3161,6 +3154,11 @@ If your mod renames Coast or Lakes, do not use this with one of these as paramet
 
 	Applicable to: Conditional
 
+??? example  "&lt;if [modFilter] is not enabled&gt;"
+	Example: "&lt;if [DeCiv Redux] is not enabled&gt;"
+
+	Applicable to: Conditional
+
 ## TriggerCondition uniques
 !!! note ""
 
@@ -3384,6 +3382,11 @@ If your mod renames Coast or Lakes, do not use this with one of these as paramet
 
 	Applicable to: MetaModifier
 
+??? example  "&lt;for every adjacent [tileFilter]&gt;"
+	Example: "&lt;for every adjacent [Farm]&gt;"
+
+	Applicable to: MetaModifier
+
 ??? example  "&lt;for every [amount] [countable]&gt;"
 	Example: "&lt;for every [3] [1000]&gt;"
 
@@ -3409,6 +3412,7 @@ If your mod renames Coast or Lakes, do not use this with one of these as paramet
 *[combatantFilter]: This indicates a combatant, which can either be a unit or a city (when bombarding). Must either be `City` or a `mapUnitFilter`.
 *[costOrStrength]: `Cost` or `Strength`.
 *[countable]: This indicates a number or a numeric variable.
+*[difficulty]: The name of any difficulty.
 *[era]: The name of any era.
 *[event]: The name of any event.
 *[foundingOrEnhancing]: `founding` or `enhancing`.

@@ -12,6 +12,7 @@ import com.unciv.models.ruleset.unique.UniqueParameterType.Companion.guessTypeFo
 import com.unciv.models.ruleset.validation.Suppression
 import com.unciv.models.stats.Stat
 import com.unciv.models.translations.TranslationFileWriter
+import com.unciv.models.translations.equalsPlaceholderText
 
 // 'region' names beginning with an underscore are used here for a prettier "Structure window" - they go in front of the rest.
 
@@ -71,6 +72,11 @@ enum class UniqueParameterType(
 
         override fun isKnownValue(parameterText: String, ruleset: Ruleset) = when {
             parameterText.toIntOrNull() != null -> true
+            parameterText.equalsPlaceholderText("[] Buildings") -> true
+            parameterText.equalsPlaceholderText("[] Cities") -> true
+            parameterText.equalsPlaceholderText("[] Units") -> true
+            parameterText.equalsPlaceholderText("Remaining [] Civilizations") -> true
+            parameterText.equalsPlaceholderText("Owned [] Tiles") -> true
             else -> super.isKnownValue(parameterText, ruleset)
         }
 
@@ -230,7 +236,7 @@ enum class UniqueParameterType(
 
     /** Implemented by [Nation.matchesFilter][com.unciv.models.ruleset.nation.Nation.matchesFilter] */
     NationFilter("nationFilter", Constants.cityStates) {
-        override val staticKnownValues = setOf(Constants.cityStates, "Major") + Constants.all
+        override val staticKnownValues = setOf(Constants.cityStates, "City-State", "Major") + Constants.all
 
         override fun getErrorSeverity(parameterText: String, ruleset: Ruleset) = getErrorSeverityForFilter(parameterText, ruleset)
 
@@ -351,6 +357,7 @@ enum class UniqueParameterType(
             parameterText in staticKnownValues -> true
             ImprovementFilter.isKnownValue(parameterText, ruleset) -> true
             TerrainFilter.isKnownValue(parameterText, ruleset) -> true
+            CivFilter.isKnownValue(parameterText, ruleset) -> true
             else -> false
         }
 
@@ -420,6 +427,9 @@ enum class UniqueParameterType(
 
     Speed("speed", "Quick", "The name of any speed") {
         override fun getKnownValuesForAutocomplete(ruleset: Ruleset) = ruleset.speeds.keys
+    },
+    Difficulty("difficulty", "Prince", "The name of any difficulty") {
+        override fun getKnownValuesForAutocomplete(ruleset: Ruleset) = ruleset.difficulties.keys
     },
 
     /** For [UniqueType.CreatesOneImprovement] */
